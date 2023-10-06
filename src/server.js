@@ -3,6 +3,7 @@ import express from "express";
 import path from "path";
 import {Server} from "socket.io"
 import WebSocket, {WebSocketServer} from "ws";
+import { instrument } from "@socket.io/admin-ui";
 
 const __dirname = path.resolve();
 const app = express();
@@ -16,6 +17,27 @@ app.get("/*", (req, res) => res.redirect("/"));
 
 const httpServer = http.createServer(app);
 const wsServer = new Server(httpServer);
+
+wsServer.on("connection", socket => {
+    socket.on("join_room", (roomName, done) => {
+        socket.join(roomName);
+        done();
+        socket.to(roomName).emit("welcome");
+    });
+});
+
+const handleListen = () => console.log('Listening on http://localhost:3000');
+httpServer.listen(3000, handleListen);
+
+/* const wsServer = new Server(httpServer, {
+    cors: {
+        origin: ["https://admin.socket.io"],
+        credentials: true,
+    }
+});
+instrument(wsServer, {
+    auth: false
+});
 
 function publicRooms() {
     const {
@@ -68,7 +90,10 @@ wsServer.on("connection", (socket) => {
     });
 
     socket.on("nickname", nickname => socket["nickname"] = nickname);
-});
+}); */
+
+
+
 
 // const  wss = new WebSocketServer({server});
 // const sockets = [];
@@ -86,7 +111,4 @@ wsServer.on("connection", (socket) => {
 //                 socket["nickname"] = message.payload;
 //         }
 //     });
-// });
-
-const handleListen = () => console.log('Listening on http://localhost:3000');
-httpServer.listen(3000, handleListen);
+// }); 
